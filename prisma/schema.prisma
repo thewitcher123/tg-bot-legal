@@ -13,12 +13,89 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// telegram users
+model User {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId String   @unique
+  username   String?
+  firstName  String?
+  lastName   String?
+  createdAt  DateTime @default(now())
+
+  purchaseList       Purchase[]
+  documentAccessList DocumentAccess[]
+}
+
+// Document templates
+model Document {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  description String?
+  fileUrl     String // file link (S3 / storage)
+  createdAt   DateTime @default(now())
+
+  documentPackageList DocumentPackage[]
+  documentAccessList  DocumentAccess[]
+}
+
+// by default - 3 variants of documents: 1st, 2nd and 1+2
+model Package {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  price    Int // цена в копейках
+  currency String // "RUB" | "EUR"
+  duration Int // длительность в днях (например 365)
+
+  documentPackageList DocumentPackage[]
+  purchaseList        Purchase[]
+}
+
+// many-to-many
+// 1 package could contain many documents
+// 1 document could be included in many packages
+model DocumentPackage {
+  id         String @id @default(auto()) @map("_id") @db.ObjectId
+  packageId  String @db.ObjectId
+  documentId String @db.ObjectId
+
+  package  Package  @relation(fields: [packageId], references: [id])
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@unique([packageId, documentId])
+}
+
 model Purchase {
-  id            String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId        String
-  resource      String // 'doc_pack_2025'
-  paymentStatus String // e.g., 'completed', 'pending', 'failed'
-  startDate     DateTime @default(now())
-  updatedDate   DateTime @updatedAt
-  endDate       DateTime
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String    @db.ObjectId
+  packageId String    @db.ObjectId
+  amount    Int
+  currency  String // "RUB" | "EUR"
+  paid      Boolean   @default(false)
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user    User    @relation(fields: [userId], references: [id])
+  package Package @relation(fields: [packageId], references: [id])
+}
+
+model DocumentAccess {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId     String   @db.ObjectId
+  documentId String   @db.ObjectId
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  isActive   Boolean  @default(true)
+
+  user     User     @relation(fields: [userId], references: [id])
+  document Document @relation(fields: [documentId], references: [id])
+
+  @@unique([userId, documentId])
+}
+
+// extra details about the download
+model DownloadLog {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId       String
+  documentId   String
+  downloadedAt DateTime @default(now())
 }

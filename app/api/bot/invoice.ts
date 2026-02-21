@@ -1,95 +1,127 @@
 import {
-    setSessionDetails,
-} from "@/app/api/bot/sceneHelpers";
-import {
     BotContext,
-    CHOOSE_PAYMENT_METHOD_BUTTONS,
     InvoiceDetails,
-    InvoiceDetailsWithStatus,
-    InvoiceStatus,
-    Price,
+    InvoiceDetailsWithPaymentStatus,
+    InvoicePaymentStatus,
+    ResponseConfig,
     Session,
+    PaymentRubInt,
+    PaymentEurInt,
+    PurchaseResource, PurchaseStatus,
 } from "@/app/api/bot/types";
-import {YOKASSA_PROVIDER_TOKEN} from "@/app/api/bot/const";
+import {SMART_GLOCAL_TEST_PROVIDER_TOKEN, YOKASSA_PROVIDER_TOKEN} from "@/app/api/bot/const";
 import {FailureCommandMessage} from "@/app/api/bot/strings";
 
-const PAYMENT_AMOUNT_INT = 7_900_00;
-
-export const getInvoicePaymentStr = (invoice?: InvoiceDetails) => {
-    const prices = (invoice?.prices || []) as Price[];
-    const totalPrice = prices.reduce((sum: number, currentValue: Price) => sum + currentValue.amount, 0);
-    const label = invoice?.prices?.[0]?.label || '';
-    if (!totalPrice || !label) {
-        return '';
-    }
-    return `${totalPrice / 100} ${label}`
-};
-
-export const replyWithOrderDetails = async (ctx: BotContext) => {
-    await ctx.reply(`
-<b>Ваш заказ, ${ctx.session?.username || ''}:</b>
-<b>Название - ${ctx.session?.invoice?.title || ''}</b>
-<b>Описание - ${ctx.session?.invoice?.description || ''}</b>
-<b>Стоимость - ${getInvoicePaymentStr(ctx.session?.invoice)}</b>
-<b>Статус - ${getInvoiceStatus(ctx.session.invoice)}</b>
-    `, {
-        parse_mode: 'HTML',
-    });
-};
-
-export const getInvoiceStatus = (invoice?: InvoiceDetailsWithStatus) => {
-    const status = invoice?.status ?? null;
-    switch (status) {
-        case InvoiceStatus.failed:
+export const getInvoiceStatus = (invoice?: InvoiceDetailsWithPaymentStatus) => {
+    const paymentStatus = invoice?.paymentStatus ?? null;
+    switch (paymentStatus) {
+        case InvoicePaymentStatus.failed:
             return 'Ошибка';
-        case InvoiceStatus.done:
+        case InvoicePaymentStatus.done:
             return 'Оплачен';
-        case InvoiceStatus.pending:
+        case InvoicePaymentStatus.pending:
             return 'Не оплачен';
         default:
             return 'Нет данных'
     }
 };
 
+const getPackTitleByType = (resource: PurchaseResource) => {
+    switch (resource) {
+        case PurchaseResource.client_pack_2026:
+            return 'Оплата за пакет «Договоры для работы с клиентами»';
+        case PurchaseResource.legal_data_2026:
+            return 'Оплата за пакет «Персональные данные и закон»';
+        case PurchaseResource.full_legal_pack_2026:
+            return 'Оплата за пакет «Полная юридическая упаковка»';
+        default:
+            return 'Нет заголовка';
+    }
+};
+
+const getPackDescriptionByType = (resource: PurchaseResource) => {
+    const dateStr = new Date(Date.now()).toLocaleDateString();
+    switch (resource) {
+        case PurchaseResource.client_pack_2026:
+            return `Вы получите доступ к пакету «Договоры для работы с клиентами» сроком на 1 год начиная с ${dateStr}`
+        case PurchaseResource.legal_data_2026:
+            return `Вы получите доступ к пакету «Персональные данные и закон» сроком на 1 год начиная с ${dateStr}`
+        case PurchaseResource.full_legal_pack_2026:
+            return `Вы получите доступ к пакету «Полная юридическая упаковка» сроком на 1 год начиная с ${dateStr}`
+        default:
+            return 'Нет описания';
+    }
+};
+
 export const getPackInvoiceRu = (ctx: BotContext) => {
-    const {id} = ctx.from;
+    const id = ctx.from.id + '';
+    const resource = ctx.session.activeDocumentType as PurchaseResource;
     const created_at = Date.now();
     const invoiceConfig: InvoiceDetails = {
-        id: '',
+        id,
         chat_id: id,
         created_at,
-        title: `Оплата за пак документов`,
-        description: `Вы получите доступ к паку документов сроком на 1 год начиная с ${new Date(created_at).toLocaleDateString()}`,
+        title: getPackTitleByType(resource),
+        description: getPackDescriptionByType(resource),
         provider_token: YOKASSA_PROVIDER_TOKEN,
         currency: 'RUB',
         prices: [{
             label: 'Руб.',
-            amount: PAYMENT_AMOUNT_INT,
+            amount: PaymentRubInt[resource].price,
         }],
-        start_parameter: 'legal-document-pack-invoice',
-        payload: `${id}`,
+        start_parameter: `${resource}-pack-invoice-ru`,
+        // todo more unique?
+        payload: id,
+        // todo
+        // need_name: true,
     };
     return invoiceConfig;
 };
 
-export const setPendingInvoice = (invoice: InvoiceDetailsWithStatus) => {
+export const getPackInvoiceEu = (ctx: BotContext) => {
+    const id = ctx.from.id + '';
+    const resource = ctx.session.activeDocumentType as PurchaseResource;
+    const created_at = Date.now();
+    const invoiceConfig: InvoiceDetails = {
+        id,
+        chat_id: id,
+        created_at,
+        title: getPackTitleByType(resource),
+        description: getPackDescriptionByType(resource),
+        provider_token: SMART_GLOCAL_TEST_PROVIDER_TOKEN,
+        currency: 'EUR',
+        prices: [{
+            label: 'Euro',
+            amount: PaymentEurInt[resource].price,
+        }],
+        start_parameter: `${resource}-pack-invoice-eu`,
+        // todo more unique?
+        payload: id,
+    };
+    return invoiceConfig;
+};
+
+export const setPendingInvoice = (invoice: InvoiceDetailsWithPaymentStatus) => {
     return {
         ...invoice,
-        status: InvoiceStatus.pending
+        paymentStatus: InvoicePaymentStatus.pending,
+        purchaseStatus: PurchaseStatus.enabled,
     }
 }
 
-export const setDoneInvoice = (invoice: InvoiceDetailsWithStatus) => {
+export const setDoneInvoice = (invoice: InvoiceDetailsWithPaymentStatus) => {
     return {
         ...invoice,
-        status: InvoiceStatus.done
+        paymentStatus: InvoicePaymentStatus.done,
+        purchaseStatus: PurchaseStatus.enabled,
     }
 }
 
-export const setFailedInvoice = (invoice: InvoiceDetailsWithStatus) => {
+export const setFailedInvoice = (invoice: InvoiceDetailsWithPaymentStatus) => {
     return {
         ...invoice,
-        status: InvoiceStatus.failed
+        paymentStatus: InvoicePaymentStatus.failed,
+        purchaseStatus: PurchaseStatus.disabled,
     }
 }
 
@@ -98,19 +130,37 @@ export const startInvoiceProcessRu = async (ctx: BotContext) => {
     // 2. set pending invoice
     // 3. pre-checkout-query
     // 4. success or fail invoice
-    ctx = setSessionDetails(ctx);
     const session = ctx.session as Session;
     session.invoice = getPackInvoiceRu(ctx);
     try {
         session.invoice = setPendingInvoice(session.invoice);
         await ctx.replyWithInvoice(session.invoice);
-        await replyWithOrderDetails(ctx);
     } catch (error) {
-        console.log({
-            msg: 'LOG REPLY WITH INVOICE (FAILURE)',
-            error,
-        })
-        session.invoice = setFailedInvoice(session.invoice);
-        await ctx.reply(FailureCommandMessage, CHOOSE_PAYMENT_METHOD_BUTTONS)
+        await invoiceErrorFallback(ctx, session, error);
     }
+};
+
+export const startInvoiceProcessEu = async (ctx: BotContext) => {
+    // 1. create an invoice -> ctx.replyWithInvoice
+    // 2. set pending invoice
+    // 3. pre-checkout-query
+    // 4. success or fail invoice
+    const session = ctx.session as Session;
+    session.invoice = getPackInvoiceEu(ctx);
+    try {
+        session.invoice = setPendingInvoice(session.invoice);
+        await ctx.replyWithInvoice(session.invoice);
+    } catch (error) {
+        await invoiceErrorFallback(ctx, session, error);
+    }
+};
+
+const invoiceErrorFallback = async (ctx: BotContext, session: Session, error: any) => {
+    if (!session.invoice) {
+        await ctx.reply('No invoice found', ResponseConfig.start);
+        return;
+    }
+    session.invoice = setFailedInvoice(session.invoice);
+    // todo an error appeared and we need to restart the payment process
+    await ctx.reply(FailureCommandMessage, ResponseConfig.start)
 };

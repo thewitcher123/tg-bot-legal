@@ -1,17 +1,30 @@
-import {BotContext} from "@/app/api/bot/types";
+import {BotContext, PurchaseResource} from "@/app/api/bot/types";
 
 export const clearSessionDetails = (ctx: BotContext) => {
     ctx.session.invoice = undefined;
     ctx.session.username = '';
-    ctx.session.purchase = null;
+    ctx.session.purchaseData = [];
+    ctx.session.activePurchase = null;
+    ctx.session.activeDocumentType = null;
 }
 
 export const setSessionDetails = (ctx: BotContext) => {
     ctx.session = {
-        invoice: undefined,
+        invoice: null,
         username: ctx.message?.from?.username,
-        purchase: null
+        purchaseData: [],
+        activeDocumentType: null,
     };
+    return ctx;
+}
+
+export const setActiveSessionDocumentType = (ctx: BotContext, documentType: PurchaseResource): BotContext => {
+    if (!ctx.session) {
+        const updatedCtx = setSessionDetails(ctx);
+        updatedCtx.session.activeDocumentType = documentType;
+        return updatedCtx;
+    }
+    ctx.session.activeDocumentType = documentType;
     return ctx;
 }
 

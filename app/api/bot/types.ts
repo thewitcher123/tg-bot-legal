@@ -1,196 +1,335 @@
 import {Context, Scenes} from 'telegraf';
+import {InlineKeyboardButton} from "@telegraf/types/markup";
+
+export enum ParseMode {
+    html = 'HTML',
+    markdown = 'Markdown',
+}
 
 export enum CommandList {
     hello = 'hello',
     start = 'start',
-    buy = 'buy',
-    receive = 'receive',
-    purchaseData = 'purchase_data',
-    why = 'why',
-    content = 'content',
+    clients_pack = 'clients_pack',
+    legal_data = 'legal_data',
+    full_legal_pack = 'full_legal_pack',
     faq = 'faq',
-    text = 'text',
-    contact = 'contact',
-    exit = 'exit',
+    back = 'back',
+    clients_pack__why = 'clients_pack__why',
+    // payment
+    payment = 'payment',
+    payment__youkassa = 'payment__youkassa',
+    payment__smart_glocal = 'payment__smart_glocal',
+    payment__youkassa__accept_offer = 'payment__youkassa__accept_offer',
+    payment__smart_glocal__accept_offer = 'payment__smart_glocal__accept_offer',
+    // todo download submenu
     download = 'download',
-    // payment submenu
-    payment_youkassa = 'payment_youkassa',
-    payment_payoneer = 'payment_payoneer',
-    // download submenu
-    download_contract = 'download_contract',
-    download_policy = 'download_policy',
-    download_brief = 'download_brief',
-    download_payment_calc = 'download_payment_calc',
-    // pay submenu
-    pay_ru_accept_offer = 'pay_ru_accept_offer',
-    pay_eu_accept_offer = 'pay_eu_accept_offer',
+    download__contract = 'download__contract',
+    download__policy = 'download__policy',
+    download__brief = 'download__brief',
+    download__payment_calc = 'download__payment_calc',
 }
 
-export const ActionsMap = {
-    hello: [
-        [
-            {
-                text: 'Начать',
-                callback_data: CommandList.hello,
-            },
-        ]
-    ],
-    start: [
-        [
-            {
-                text: 'Получить рабочий пак',
-                callback_data: CommandList.receive,
-            },
-        ],
-        [
-            {
-                text: 'Что внутри?',
-                callback_data: CommandList.content,
-            },
-        ],
-        [
-            {
-                text: 'Частые вопросы',
-                callback_data: CommandList.faq,
-            },
-        ],
-        [
-            {
-                text: 'Связаться со мной',
-                callback_data: CommandList.contact,
-            },
-        ],
-        [
-            {
-                text: 'Мои покупки',
-                callback_data: CommandList.purchaseData,
-            },
-        ]
-    ],
-    payment: [
-        [
-            {
-                text: 'Оплата из РФ(Юкасса)',
-                callback_data: CommandList.payment_youkassa,
-            },
-        ],
-        [
-            {
-                text: 'Оплата из других стран (Payoneer)',
-                callback_data: CommandList.payment_payoneer,
-            },
-        ],
-    ],
-    pay: {
-        ru: [
-            [
-                {
-                    text: 'Оплатить 7 990₽',
-                    callback_data: CommandList.pay_ru_accept_offer,
-                }
-            ]
-        ],
-        eu: [
-            [
-                {
-                    text: 'Оплатить 7 990₽ (евро)',
-                    callback_data: CommandList.pay_eu_accept_offer,
-                }
-            ]
-        ]
+export enum PurchaseResource {
+    client_pack_2026 = 'client_pack_2026',
+    legal_data_2026 = 'legal_data_2026',
+    full_legal_pack_2026 = 'full_legal_pack_2026',
+}
+
+export const PaymentRubInt = {
+    [PurchaseResource.client_pack_2026]: {
+        price: 18_990_00,
+        buttonPrice: '18 990,00₽'
     },
-    download: [
-        [
-            {
-                text: 'Перейти к договору',
-                callback_data: CommandList.download_contract,
-            },
-        ],
-        [
-            {
-                text: 'Перейти к политике персональных данных',
-                callback_data: CommandList.download_policy,
-            },
-        ],
-        [
-            {
-                text: 'Перейти к брифу по фирменному стилю',
-                callback_data: CommandList.download_brief,
-            },
-        ],
-        [
-            {
-                text: 'Перейти к рассчету стоимости',
-                callback_data: CommandList.download_payment_calc,
-            },
-        ],
-        [
-            {
-                text: 'Получить файлы еще раз',
-                callback_data: CommandList.download,
-            },
-        ],
+    [PurchaseResource.legal_data_2026]: {
+        price: 8_990_00,
+        buttonPrice: '8 990,00₽'
+    },
+    [PurchaseResource.full_legal_pack_2026]: {
+        price: 25_990_00,
+        buttonPrice: '25 990,00₽'
+    },
+}
+
+export const PaymentEurInt = {
+    [PurchaseResource.client_pack_2026]: {
+        price: 18_990_00,
+        buttonPrice: '18 990,00Eur'
+    },
+    [PurchaseResource.legal_data_2026]: {
+        price: 8_990_00,
+        buttonPrice: '8 990,00Eur'
+    },
+    [PurchaseResource.full_legal_pack_2026]: {
+        price: 25_990_00,
+        buttonPrice: '25 990,00Eur'
+    },
+}
+
+const START_BUTTONS = [
+    [
+        {
+            text: 'Пакет «Договоры для работы с клиентами»',
+            callback_data: CommandList.clients_pack,
+        },
     ],
-    exit: [
-        [
-            {
-                text: 'Выход',
-                callback_data: CommandList.exit,
-            },
-        ]
+    [
+        {
+            text: '«Персональные данные и закон»',
+            callback_data: CommandList.legal_data,
+        },
     ],
-    exitOrRepeat: [
-        [
-            {
-                text: 'Скачать снова',
-                callback_data: CommandList.download,
-            },
-            {
-                text: 'Вернуться в меню',
-                callback_data: CommandList.exit,
-            },
-        ]
+    [
+        {
+            text: '«Полная юридическая упаковка»',
+            callback_data: CommandList.full_legal_pack,
+        },
     ],
-    contact: [
-        [
-            {
-                text: 'Связаться со мной',
-                callback_data: CommandList.contact
-            }
-        ]
+    [
+        {
+            text: 'Частые вопросы',
+            callback_data: CommandList.faq,
+        },
     ],
-    backOrBuy: [
-        [
-            {
-                text: 'Купить за 7900р',
-                callback_data: CommandList.buy,
-            }
-        ],
-        [
-            {
-                text: 'Связаться со мной',
-                callback_data: CommandList.contact,
-            },
-        ],
-        [
-            {
-                text: 'Вернуться в меню',
-                callback_data: CommandList.exit,
-            },
-        ],
-    ]
+    // todo clarify
+    /*[
+        {
+            text: 'Мои документы',
+            callback_data: CommandList.purchase_data,
+        },
+    ]*/
+];
+const BACK_BUTTON = [
+    {
+        text: 'Вернуться в меню',
+        callback_data: CommandList.back,
+    },
+];
+export type ResponseConfigType = Record<CommandList, {
+    reply_markup: {
+        inline_keyboard: InlineKeyboardButton[][]
+    },
+    parse_mode?: ParseMode,
+}>
+// what text do we render according to the command
+export const ResponseConfig: ResponseConfigType = {
+    hello: {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Начать',
+                        callback_data: CommandList.hello,
+                    },
+                ]
+            ],
+        }
+    },
+    start: {
+        reply_markup: {
+            inline_keyboard: START_BUTTONS,
+        }
+    },
+    clients_pack: {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Получить пакет «Договоры для работы с клиентами»',
+                        callback_data: CommandList.payment,
+                    },
+                ],
+                [
+                    {
+                        text: 'Почему этот пак лучше',
+                        callback_data: CommandList.clients_pack__why,
+                    },
+                ],
+                [
+                    {
+                        text: 'Частые вопросы',
+                        callback_data: CommandList.faq,
+                    },
+                ],
+                BACK_BUTTON,
+            ],
+        }
+    },
+    clients_pack__why: {
+        reply_markup: {
+            inline_keyboard: START_BUTTONS,
+        }
+    },
+    payment: {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Оплата из РФ (Юкасса)',
+                        callback_data: CommandList.payment__youkassa,
+                    },
+                ],
+                [
+                    {
+                        text: 'Оплата из других стран (Smart Glocal)',
+                        callback_data: CommandList.payment__smart_glocal,
+                    },
+                ],
+            ],
+        }
+    },
+    payment__youkassa: {
+        parse_mode: ParseMode.html,
+        reply_markup: {
+            inline_keyboard: [],
+        },
+    },
+    payment__smart_glocal: {
+        parse_mode: ParseMode.html,
+        reply_markup: {
+            inline_keyboard: [],
+        },
+    },
+    legal_data: {
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Частые вопросы',
+                        callback_data: CommandList.faq,
+                    },
+                ],
+                [
+                    {
+                        text: 'Получить пакет «Договоры для работы с клиентами»',
+                        callback_data: CommandList.payment,
+                    },
+                ],
+                BACK_BUTTON,
+            ],
+        }
+    },
+    full_legal_pack: {
+        parse_mode: ParseMode.html,
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: 'Частые вопросы',
+                        callback_data: CommandList.faq,
+                    },
+                ],
+                [
+                    {
+                        text: 'Приобрести пакет «Полная юридическая упаковка»',
+                        callback_data: CommandList.payment,
+                    },
+                ],
+                BACK_BUTTON,
+            ],
+        }
+    },
+    faq: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON,
+            ],
+        }
+    },
+    back: {
+        reply_markup: {
+            inline_keyboard: START_BUTTONS,
+        }
+    },
+    download: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
+    download__contract: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
+    download__policy: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
+    download__brief: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
+    download__payment_calc: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
+    // pay submenu
+    payment__youkassa__accept_offer: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
+    payment__smart_glocal__accept_offer: {
+        reply_markup: {
+            inline_keyboard: [
+                BACK_BUTTON
+            ],
+        }
+    },
 };
 
-// todo update according to the topic
-export enum PurchaseResource {
-    doc_pack_2025 = 'doc_pack_2025',
-}
+export const getReplyMarkupRu = (resource: PurchaseResource) => {
+    return {
+        parse_mode: ParseMode.html,
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: `Оплатить ${PaymentRubInt[resource].buttonPrice}`,
+                        callback_data: CommandList.payment__youkassa__accept_offer,
+                    }
+                ]
+            ],
+        }
+    };
+};
+
+export const getReplyMarkupEu = (resource: PurchaseResource) => {
+    return {
+        parse_mode: ParseMode.html,
+        reply_markup: {
+            inline_keyboard: [
+                [
+                    {
+                        text: `Оплатить ${PaymentEurInt[resource].buttonPrice}`,
+                        callback_data: CommandList.payment__smart_glocal__accept_offer,
+                    }
+                ]
+            ],
+        }
+    };
+};
 
 export interface PurchaseData {
     id: string,
     userId: string,
     resource: PurchaseResource,
-    paymentStatus: InvoiceStatus,
+    paymentStatus: InvoicePaymentStatus,
+    purchaseStatus: PurchaseStatus,
     startDate: string,
     updatedDate: string,
     endDate: string,
@@ -198,8 +337,10 @@ export interface PurchaseData {
 
 export interface Session {
     username: string;
-    invoice: InvoiceDetails;
-    purchase: PurchaseData | null;
+    invoice: InvoiceDetails | null;
+    activePurchase: PurchaseData | null;
+    purchaseData: PurchaseData[];
+    activeDocumentType: PurchaseResource | null;
 }
 
 // @ts-ignore
@@ -210,10 +351,15 @@ export type BotContext = Context & Scenes.SceneContextMessageUpdate & {
     };
 };
 
-export enum InvoiceStatus {
+export enum InvoicePaymentStatus {
     failed = 'failed',
     pending = 'pending',
     done = 'done',
+}
+
+export enum PurchaseStatus {
+    enabled = 'enabled',
+    disabled = 'disabled',
 }
 
 export interface Price {
@@ -234,68 +380,7 @@ export interface InvoiceDetails {
     payload: string,
 }
 
-export interface InvoiceDetailsWithStatus extends InvoiceDetails {
-    status?: InvoiceStatus;
+export interface InvoiceDetailsWithPaymentStatus extends InvoiceDetails {
+    paymentStatus?: InvoicePaymentStatus;
+    purchaseStatus?: PurchaseStatus;
 }
-
-export const HELLO_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.hello,
-    }
-};
-
-export const START_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.start,
-    }
-};
-
-export const DOWNLOAD_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.download,
-    }
-};
-
-export const WHY_BETTER_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.backOrBuy,
-    }
-};
-
-export const CHOOSE_PAYMENT_METHOD_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.payment,
-    }
-};
-
-export const CONTENT_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.backOrBuy,
-    }
-};
-
-export const FAQ_BUTTONS = {
-    reply_markup: {
-        inline_keyboard: ActionsMap.backOrBuy,
-    }
-};
-
-export const PAY_BUTTONS_RU = {
-    parse_mode: 'HTML',
-    reply_markup: {
-        inline_keyboard: ActionsMap.pay.ru,
-    }
-};
-export const PAY_BUTTONS_EU = {
-    parse_mode: 'HTML',
-    reply_markup: {
-        inline_keyboard: ActionsMap.pay.eu,
-    }
-};
-
-export const CONTACT_ME_BUTTONS = {
-    parse_mode: 'HTML',
-    reply_markup: {
-        inline_keyboard: ActionsMap.contact,
-    }
-};
