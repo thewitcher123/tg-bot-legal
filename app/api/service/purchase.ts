@@ -10,7 +10,12 @@ export async function createPurchase(
         // search for the document package id
         const pkg = await tx.package.findUnique({
             where: {id: packageId}
-        })
+        });
+
+        console.log({
+            msg: 'LOG createPurchase -> pkg',
+            pkg,
+        });
 
         if (!pkg) {
             throw new Error('Package not found')
@@ -26,7 +31,7 @@ export async function createPurchase(
                     lt: new Date(Date.now() - 1000 * 60 * 30)
                 }
             }
-        })
+        });
 
         // check if we have fresh unpaid purchase
         const existingPending = await tx.purchase.findFirst({
@@ -38,7 +43,12 @@ export async function createPurchase(
             orderBy: {
                 createdAt: 'desc'
             }
-        })
+        });
+
+        console.log({
+            msg: 'LOG createPurchase -> existingPending',
+            existingPending,
+        });
 
         if (existingPending) {
             return existingPending
@@ -50,11 +60,16 @@ export async function createPurchase(
                 userId,
                 packageId,
                 amount: pkg.price,
+                currency: pkg.currency,
                 paid: false
             }
-        })
+        });
+        console.log({
+            msg: 'LOG createPurchase -> purchase',
+            purchase,
+        });
 
-        return purchase
+        return purchase;
     })
 }
 
@@ -65,13 +80,20 @@ export async function confirmPurchase(purchaseId: string) {
             where: {id: purchaseId},
             include: {
                 package: {
-                    include: {
-                        // todo
-                        documents: true
+                    select: {
+                        name: true,
+                        price: true,
+                        currency: true,
+                        duration: true,
                     }
                 }
             }
-        })
+        });
+
+        console.log({
+            msg: 'LOG confirmPurchase -> purchase',
+            purchase,
+        });
 
         if (!purchase) {
             throw new Error('Purchase not found')
@@ -91,21 +113,26 @@ export async function confirmPurchase(purchaseId: string) {
             }
         })
 
-        const durationDays = purchase?.package?.duration;
+        const durationDays = purchase.package.duration;
 
         // get all package documents
         const packageDocuments = await tx.documentPackage.findMany({
             where: {
                 packageId: purchase.packageId
             }
-        })
+        });
+
+        console.log({
+            msg: 'LOG confirmPurchase -> packageDocuments',
+            packageDocuments,
+        });
 
         // grant access to each document from the package
-        for (const pkgDoc of packageDocuments) {
+        for (const document of packageDocuments) {
             await grantOrExtendAccess(
                 tx,
                 purchase.userId,
-                pkgDoc.documentId,
+                document.documentId,
                 durationDays
             )
         }

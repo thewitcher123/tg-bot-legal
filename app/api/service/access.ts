@@ -14,7 +14,12 @@ export async function grantOrExtendAccess(
                 documentId
             }
         }
-    })
+    });
+
+    console.log({
+        msg: 'LOG grantOrExtendAccess -> existingAccess',
+        existingAccess,
+    });
 
     const now = new Date()
 
@@ -58,7 +63,12 @@ export async function checkDocumentAccess(
                 documentId
             }
         }
-    })
+    });
+
+    console.log({
+        msg: 'LOG checkDocumentAccess -> access',
+        access,
+    });
 
     if (!access || access.expiresAt < new Date()) {
         return false
@@ -70,7 +80,7 @@ export async function checkDocumentAccess(
 export async function getActiveDocuments(userId: string) {
     const now = new Date()
 
-    const accesses = await prisma.documentAccess.findMany({
+    const documentAccessList = await prisma.documentAccess.findMany({
         where: {
             userId,
             expiresAt: {
@@ -80,7 +90,11 @@ export async function getActiveDocuments(userId: string) {
         include: {
             document: true
         }
-    })
+    });
+    console.log({
+        msg: 'LOG getActiveDocuments -> purchase',
+        documentAccessList,
+    });
 
-    return accesses.map(a => a.document)
+    return documentAccessList.map(a => a.document)
 }

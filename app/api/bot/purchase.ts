@@ -61,25 +61,6 @@ export const createPurchaseByUser = async (ctx: BotContext, resource: PurchaseRe
     }
 };
 
-/*export const deleteOldPurchasesByUser = async (userId: string) => {
-    try {
-        await prisma.purchase.deleteMany({
-            where: {
-                userId,
-                endDate: {
-                    lt: new Date(),
-                },
-            }
-        })
-    } catch (error: any) {
-        console.log({
-            msg: 'error while deleting purchases',
-            error,
-        });
-        return null;
-    }
-};*/
-
 const addDays = (daysToAdd: number) => {
     const newDate = new Date();
     newDate.setDate(newDate.getDate() + daysToAdd);

@@ -27,17 +27,36 @@ import {
     UserDocumentsMessages,
     WhyBetterMessage,
 } from "@/app/api/bot/strings";
-import {clearSessionDetails, getUserIdFromCtx, setActiveSessionDocumentType,} from "@/app/api/bot/sceneHelpers";
+import {clearSessionDetails, setActiveSessionDocumentType,} from "@/app/api/bot/sceneHelpers";
 import {setDoneInvoice, startInvoiceProcessRu, startInvoiceProcessEu} from "@/app/api/bot/invoice";
-import {createPurchaseByUser, getUserPurchaseDetails, setPurchaseDetailsFromDB} from "@/app/api/bot/purchase";
+import {createPurchaseByUser} from "@/app/api/bot/purchase";
 import {answerWithNikitaVideoCircle} from "@/app/api/bot/media";
+import {PACKAGE_1_SAMPLES, PACKAGE_2_SAMPLES, PACKAGE_3_SAMPLES} from '@/app/api/service/package';
+import {
+    createDocumentPackageRelation,
+    createPackagesAndDocuments
+} from "@/app/api/service/documentPackage";
+import {DOCUMENTS_TO_CREATE_PACKAGE_1, DOCUMENTS_TO_CREATE_PACKAGE_2} from "@/app/api/service/document";
 
 if (!TG_TOKEN) throw new Error('TELEGRAM_BOT_TOKEN environment variable not found.');
 const bot = new Telegraf<BotContext>(TG_TOKEN);
 bot.use(session({}));
 
+const createDBByConst = async () => {
+    await createPackagesAndDocuments(PACKAGE_1_SAMPLES, DOCUMENTS_TO_CREATE_PACKAGE_1);
+    await createPackagesAndDocuments(PACKAGE_2_SAMPLES, DOCUMENTS_TO_CREATE_PACKAGE_2);
+    await createPackagesAndDocuments(PACKAGE_3_SAMPLES, []);
+    await createDocumentPackageRelation(PACKAGE_1_SAMPLES[0].name, DOCUMENTS_TO_CREATE_PACKAGE_1.map(item => item.title));
+    await createDocumentPackageRelation(PACKAGE_1_SAMPLES[1].name, DOCUMENTS_TO_CREATE_PACKAGE_1.map(item => item.title));
+    await createDocumentPackageRelation(PACKAGE_2_SAMPLES[0].name, DOCUMENTS_TO_CREATE_PACKAGE_2.map(item => item.title));
+    await createDocumentPackageRelation(PACKAGE_2_SAMPLES[1].name, DOCUMENTS_TO_CREATE_PACKAGE_2.map(item => item.title));
+    await createDocumentPackageRelation(PACKAGE_3_SAMPLES[0].name, [...DOCUMENTS_TO_CREATE_PACKAGE_1, ...DOCUMENTS_TO_CREATE_PACKAGE_2].map(item => item.title));
+    await createDocumentPackageRelation(PACKAGE_3_SAMPLES[1].name, [...DOCUMENTS_TO_CREATE_PACKAGE_1, ...DOCUMENTS_TO_CREATE_PACKAGE_2].map(item => item.title));
+};
+
 bot.start(async (ctx) => {
-    await setPurchaseDetailsFromDB(ctx);
+    // await createDBByConst();
+    
     return await ctx.reply(StartMessage, ResponseConfig.start);
 });
 
