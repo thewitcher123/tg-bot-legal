@@ -15,7 +15,13 @@ const config: Config = {
             },
             colors: {
                 'darkseagreen': 'darkseagreen'
-            }
+            },
+            height: {
+                '90vh': '90vh',
+            },
+            maxHeight: {
+                '90vh': '90vh',
+            },
         },
     },
     plugins: [],

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import {NavBar} from "@/app/components/NavBar";
 
 const features = [
     {
@@ -19,7 +18,6 @@ const features = [
 export default function HomePage() {
     return (
         <>
-            <NavBar/>
             <main className="min-h-screen bg-gradient-to-br from-zinc-950 via-zinc-950/80 to-zinc-900">
                 <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
                     <div className="mx-auto mb-16 max-w-2xl text-center">

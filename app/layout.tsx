@@ -1,6 +1,8 @@
 import {ReactNode} from "react";
 import type {Metadata} from "next";
 
+import {NavBar} from "@/app/components/NavBar";
+
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,6 +18,7 @@ export default async function RootLayout({
     return (
         <html lang="en">
         <body>
+        <NavBar/>
         {children}
         </body>
         </html>

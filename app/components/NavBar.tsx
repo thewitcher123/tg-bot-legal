@@ -19,6 +19,11 @@ const navItems = [
         label: "Packages",
         icon: "📦"
     },
+    {
+        href: "/document-package",
+        label: "Associations",
+        icon: "🔗"
+    }
 ];
 
 export function NavBar() {
@@ -51,9 +56,6 @@ export function NavBar() {
                                         : "text-zinc-400 hover:bg-zinc-800/50 hover:text-zinc-200"
                                 }`}
                             >
-                                {isActive && (
-                                    <div className="absolute -left-4 top-1/2 h-2 w-2 -translate-y-1/2 rounded-full bg-emerald-400"/>
-                                )}
                                 <span>{icon}</span>
                                 <span>{label}</span>
                             </Link>

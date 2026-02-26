@@ -56,7 +56,6 @@ const createDBByConst = async () => {
 
 bot.start(async (ctx) => {
     // await createDBByConst();
-    
     return await ctx.reply(StartMessage, ResponseConfig.start);
 });
 

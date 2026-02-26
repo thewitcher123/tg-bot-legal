@@ -42,8 +42,8 @@ model Document {
 model Package {
   id       String @id @default(auto()) @map("_id") @db.ObjectId
   name     String
-  price    Int // цена в копейках
-  currency String // "RUB" | "EUR"
+  priceRub Int // цена в копейках
+  priceEur Int // цена в евро-центах
   duration Int // длительность в днях (например 365)
 
   documentPackageList DocumentPackage[]
@@ -58,8 +58,8 @@ model DocumentPackage {
   packageId  String @db.ObjectId
   documentId String @db.ObjectId
 
-  package  Package  @relation(fields: [packageId], references: [id])
-  document Document @relation(fields: [documentId], references: [id])
+  package  Package  @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  document Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
 
   @@unique([packageId, documentId])
 }

@@ -7,21 +7,22 @@ export type SafeDocument = Omit<Document, 'createdAt'> & {
 };
 
 export async function POST(req: NextRequest) {
-    const body = await req.json()
-
+    const body = await req.json();
     const {
         title,
+        description,
         fileUrl
-    } = body
+    } = body;
 
-    const document = await prisma.document.create({
+    const doc = await prisma.document.create({
         data: {
             title,
-            fileUrl
-        }
-    })
+            description: description ?? null,
+            fileUrl,
+        },
+    });
 
-    return NextResponse.json(document)
+    return NextResponse.json(doc);
 }
 
 export async function GET() {

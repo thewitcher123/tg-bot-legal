@@ -3,7 +3,6 @@ import {Package} from '@prisma/client';
 import {NextRequest, NextResponse} from 'next/server'
 
 export type SafePackage = Omit<Package, 'createdAt'> & {
-    // todo no such field
     createdAt: string;
 };
 
@@ -12,16 +11,16 @@ export async function POST(req: NextRequest) {
 
     const {
         name,
-        price,
-        currency,
+        priceRub,
+        priceEur,
         duration,
     } = body
 
     const pkg = await prisma.package.create({
         data: {
             name,
-            price,
-            currency,
+            priceRub,
+            priceEur,
             duration,
         }
     })
