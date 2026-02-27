@@ -93,7 +93,7 @@ export function MultiSelectDocumentDropdown({
                     {/* Options */}
                     <div className="py-2">
                         {filtered.map((doc) => {
-                            const isSelected = selected.some((s) => s.id === doc.id);
+                            const isSelected = selected.find((s) => s.id === doc.id);
                             return (
                                 <button
                                     key={doc.id}
