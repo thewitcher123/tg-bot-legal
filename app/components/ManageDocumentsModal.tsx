@@ -161,7 +161,7 @@ export function ManageDocumentsModal({
                 </div>
 
                 {/* Sticky Footer - всегда виден */}
-                <div className="border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-lg p-6 flex-shrink-0">
+                <div className="border-t border-zinc-100 bg-zinc-950/95 backdrop-blur-lg p-6 flex-shrink-0">
                     <div className="flex items-center gap-3">
                         <button
                             type="button"
